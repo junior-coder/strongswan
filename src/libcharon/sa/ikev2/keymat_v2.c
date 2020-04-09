@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 Tobias Brunner
+ * Copyright (C) 2015-2020 Tobias Brunner
  * Copyright (C) 2008 Martin Willi
  * HSR Hochschule fuer Technik Rapperswil
  *
@@ -299,7 +299,7 @@ failure:
 }
 
 METHOD(keymat_v2_t, derive_ike_keys, bool,
-	private_keymat_v2_t *this, proposal_t *proposal, key_exchange_t *dh,
+	private_keymat_v2_t *this, proposal_t *proposal, array_t *kes,
 	chunk_t nonce_i, chunk_t nonce_r, ike_sa_id_t *id,
 	pseudo_random_function_t rekey_function, chunk_t rekey_skd)
 {
@@ -312,7 +312,7 @@ METHOD(keymat_v2_t, derive_ike_keys, bool,
 	spi_i = chunk_alloca(sizeof(uint64_t));
 	spi_r = chunk_alloca(sizeof(uint64_t));
 
-	if (!dh->get_shared_secret(dh, &secret))
+	if (!key_exchange_concat_secrets(kes, &secret))
 	{
 		return FALSE;
 	}
@@ -587,7 +587,7 @@ METHOD(keymat_v2_t, derive_ike_keys_ppk, bool,
 }
 
 METHOD(keymat_v2_t, derive_child_keys, bool,
-	private_keymat_v2_t *this, proposal_t *proposal, key_exchange_t *dh,
+	private_keymat_v2_t *this, proposal_t *proposal, array_t *kes,
 	chunk_t nonce_i, chunk_t nonce_r, chunk_t *encr_i, chunk_t *integ_i,
 	chunk_t *encr_r, chunk_t *integ_r)
 {
@@ -664,9 +664,9 @@ METHOD(keymat_v2_t, derive_child_keys, bool,
 		return FALSE;
 	}
 
-	if (dh)
+	if (kes)
 	{
-		if (!dh->get_shared_secret(dh, &secret))
+		if (!key_exchange_concat_secrets(kes, &secret))
 		{
 			return FALSE;
 		}
